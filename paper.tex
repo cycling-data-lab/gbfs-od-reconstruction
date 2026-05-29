@@ -152,7 +152,12 @@ standard-compliance threshold below which operational OD monitoring is
 infeasible. An audit of \Todo{$N$} French free-floating networks instantiates
 the bound and exhibits a sharp bimodal split between standard-compliant
 (identifier-rotating, untrackable) and non-compliant (persistent, trackable)
-feeds.
+feeds. The contribution is therefore a \emph{normative feasibility audit}---a
+characterisation of when standard compliance makes OD recovery impossible in
+operational time---and not a new reconstruction estimator: the estimator's
+convergence is established on synthetic ground truth, while the real feeds serve
+only to instantiate the bound's constants and place each network on the
+feasibility map.
 \end{abstract}
 
 % =========================================================================
@@ -207,9 +212,19 @@ the only lever that keeps the horizon finite (Section~\ref{sec:horizon}); and
 networks, whose identifier-persistence rates split sharply into compliant and
 non-compliant regimes (Section~\ref{sec:audit}). Section~\ref{sec:discussion}
 translates the threshold into a concrete recommendation for the standard's
-maintainers. Because the novelty of the contribution rests on \emph{not}
-re-deriving the classical estimators, we first delimit what the existing two
-literatures already settle.
+maintainers.
+
+\paragraph{Scope.}
+We stress what this paper is and is not. It is a \emph{feasibility and
+identifiability audit}: we characterise, as a function of standard compliance,
+when OD reconstruction is possible at all, and we validate the estimator's
+convergence on synthetic data where the true cost is known. It is \emph{not} a
+claim of validated pointwise OD reconstruction on the real feeds---no public feed
+exposes both persistent identifiers and ground-truth trips---so the real data
+serve only to instantiate the bound's constants $(q,\kappa,\beta,\gamma,\Lambda)$
+and to place each network on the feasibility map. Because the novelty rests on
+\emph{not} re-deriving the classical estimators, we first delimit what the
+existing two literatures already settle.
 
 % =========================================================================
 \section{Background and related work}
@@ -416,19 +431,36 @@ $q \ge q_{\min}:=\dim\theta/(\lambda_{\min}\delta_\OD^4 \Lambda
 $T_{\max}$ and operational monitoring is infeasible.
 \end{corollary}
 
-\subsection{Partial pooling across networks is the only lever on \texorpdfstring{$\Tstar$}{T*}}
+\begin{remark}[Stationarity ceiling]
+\label{rem:stationarity}
+Since $\Tstar$ is a \emph{cumulative} sampling requirement, it is only meaningful
+below the OD process's stationarity period $T_{\mathrm{stat}}$; diurnal and
+weekly cycles put $T_{\mathrm{stat}}$ at the order of a week for a static cost.
+The operative constraint is therefore $\Tstar \le \min(T_{\max},
+T_{\mathrm{stat}})$: if $\Tstar > T_{\mathrm{stat}}$ the feed mutates before
+enough data accrue, so the coupling is formally unidentifiable within any single
+regime. Non-stationarity thus tightens, rather than relaxes, the infeasibility
+verdict.
+\end{remark}
+
+\subsection{Pooling is a forced trade-off, not a free lunch}
 \label{sec:pooling}
 
-For a single small network, \eqref{eq:Tstar} can run to years (Section~\ref{sec:audit}).
-The only term the analyst controls is $\dim\theta$. Modelling the cost
-hierarchically---a common deterrence law $\theta$ shared across the $N$ networks
-with city-level random effects---divides the per-city parameter budget by the
-number of poolable cities, and is therefore the mechanism that brings $\Tstar$
-back from ``years'' to ``weeks''. The multi-system panel is thus
-\emph{statistically load-bearing}, not merely a comparative convenience; a fixed
-$\varepsilon$ imposed for cross-city comparability additionally caps the
-achievable accuracy at $\delta_\OD\gtrsim\varepsilon$. With the law in hand, we
-turn to measuring its constants on real feeds.
+For a single small network, \eqref{eq:Tstar} can run to years (Section~\ref{sec:audit}),
+and the only term the analyst controls is $\dim\theta$. Modelling the cost
+hierarchically---a deterrence law shared across the $N$ networks with city-level
+random effects---divides the per-city parameter budget by the number of poolable
+cities, and is the only mechanism that brings $\Tstar$ from ``years'' back to
+``weeks''. We are careful not to present this as a free lunch: a shared $\theta$
+assumes that distance, gradient and infrastructure deterrence are common across
+cities, which they are not, so pooling buys a finite horizon at the price of a
+specification bias that no individual city exactly satisfies. The honest reading
+is that, to recover OD on small privacy-compliant feeds at all, the analyst is
+\emph{forced} to sacrifice local specificity---itself a further indication that
+the bottleneck lies in the standard, not in the estimator. A fixed $\varepsilon$
+imposed for cross-city comparability additionally caps the achievable accuracy
+at $\delta_\OD\gtrsim\varepsilon$. With the law in hand, we turn to measuring its
+constants on real feeds.
 
 % =========================================================================
 \section{Auditing the French micromobility feeds}
@@ -524,9 +556,19 @@ persistence regime---e.g.\ session-scoped but trip-stable identifiers---or
 and route transactional needs to the regulator-facing Mobility Data
 Specification (MDS), whose two-way, trip-level access is the appropriate channel
 when $q<q_{\min}$. \Todo{Develop the $q_{\min}$ figure for representative French
-agencies and connect to the LOM/GDPR context.} Either way, the design choice
-should be made knowingly, with the horizon law in view, rather than emerging by
-accident from an identifier-rotation default.
+agencies and connect to the LOM/GDPR context.}
+
+One might object that regulators do not need GBFS at all, since MDS already
+carries trip-level data. The objection sharpens our point. MDS access is
+restricted to the operator's contracting authority, whereas GBFS is the only
+\emph{public} channel available to researchers, civil-society groups, and the
+many small municipalities without an audit mandate. If a strictly
+privacy-compliant GBFS (small $q$) becomes unusable for macroscopic monitoring,
+the operator--public information asymmetry becomes total for precisely those
+actors, and Corollary~\ref{cor:threshold} quantifies the price of that
+asymmetry. Either way, the design choice should be made knowingly, with the
+horizon law in view, rather than emerging by accident from an
+identifier-rotation default.
 
 % =========================================================================
 \section{Conclusion and limitations}
@@ -539,7 +581,11 @@ part of the log-selection (so station emptiness is harmless but 60-second
 aliasing is not), and the resulting estimator obeys a sampling-horizon law
 $\Tstar\propto\delta_\OD^{-4}q^{-1}$ that defines a compliance threshold below
 which monitoring is infeasible. An audit of French feeds confirms a sharp
-compliant/non-compliant split.
+compliant/non-compliant split. The paper thus models the \emph{impossibility} of
+reconstruction under a privacy-compliant standard rather than proposing a
+reconstruction method: even under the strongly structuring Gibbs assumption the
+horizon is operationally infeasible for compliant feeds, and any relaxation of
+that assumption only weakens identifiability further and loosens the bound.
 
 The results are conditional on the Gibbs/low-rank-cost assumption, which---though
 it coincides with the field's standard estimators---is the binding commitment;
