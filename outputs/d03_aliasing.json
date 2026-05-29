@@ -1,0 +1,122 @@
+{
+  "seed": 42,
+  "params": {
+    "v_mps": 4.0,
+    "beta_true": 0.0006666666666666666,
+    "syn_deltas": [
+      60,
+      120,
+      180,
+      300,
+      600,
+      900
+    ],
+    "real_strides": [
+      1,
+      2,
+      3,
+      5,
+      10
+    ]
+  },
+  "synthetic": [
+    {
+      "delta_s": 60,
+      "d_min_m": 240.0,
+      "kappa": 0.8521,
+      "beta_hat": 0.0005756037840274948,
+      "beta_ratio": 0.8634,
+      "analytic_ratio": 0.8621
+    },
+    {
+      "delta_s": 120,
+      "d_min_m": 480.0,
+      "kappa": 0.7259,
+      "beta_hat": 0.0005057313886218866,
+      "beta_ratio": 0.7586,
+      "analytic_ratio": 0.7576
+    },
+    {
+      "delta_s": 180,
+      "d_min_m": 720.0,
+      "kappa": 0.6183,
+      "beta_hat": 0.00045096255482614885,
+      "beta_ratio": 0.6764,
+      "analytic_ratio": 0.6757
+    },
+    {
+      "delta_s": 300,
+      "d_min_m": 1200.0,
+      "kappa": 0.4484,
+      "beta_hat": 0.00037051697523535513,
+      "beta_ratio": 0.5558,
+      "analytic_ratio": 0.5556
+    },
+    {
+      "delta_s": 600,
+      "d_min_m": 2400.0,
+      "kappa": 0.2017,
+      "beta_hat": 0.00025674991942694356,
+      "beta_ratio": 0.3851,
+      "analytic_ratio": 0.3846
+    },
+    {
+      "delta_s": 900,
+      "d_min_m": 3600.0,
+      "kappa": 0.0902,
+      "beta_hat": 0.00019611025333806357,
+      "beta_ratio": 0.2942,
+      "analytic_ratio": 0.2941
+    }
+  ],
+  "real": {
+    "feed": "capcotentin",
+    "status": "ok",
+    "n_files": 1,
+    "n_snapshots": 107,
+    "poll_s": 60.0,
+    "n_vehicles": 345,
+    "curve": [
+      {
+        "stride": 1,
+        "eff_delta_s": 60.0,
+        "n_linked": 299,
+        "kappa": 1.0,
+        "mean_move_m": 2119.4,
+        "median_move_m": 1771.8
+      },
+      {
+        "stride": 2,
+        "eff_delta_s": 120.0,
+        "n_linked": 285,
+        "kappa": 0.9532,
+        "mean_move_m": 2105.5,
+        "median_move_m": 1736.6
+      },
+      {
+        "stride": 3,
+        "eff_delta_s": 180.0,
+        "n_linked": 275,
+        "kappa": 0.9197,
+        "mean_move_m": 2105.5,
+        "median_move_m": 1736.6
+      },
+      {
+        "stride": 5,
+        "eff_delta_s": 300.0,
+        "n_linked": 275,
+        "kappa": 0.9197,
+        "mean_move_m": 2105.5,
+        "median_move_m": 1736.6
+      },
+      {
+        "stride": 10,
+        "eff_delta_s": 600.0,
+        "n_linked": 144,
+        "kappa": 0.4816,
+        "mean_move_m": 2395.9,
+        "median_move_m": 1974.4
+      }
+    ]
+  }
+}
