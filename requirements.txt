@@ -1,0 +1,22 @@
+# Python 3.12 required.  Pin versions to match a known-good environment.
+
+# Numeric core
+numpy>=2.0
+scipy>=1.14
+pandas>=2.2
+pyarrow>=16.0          # Parquet vehicle snapshots
+
+# Optimal transport / estimation
+POT>=0.9               # Sinkhorn / entropic OT (python-optimal-transport)
+scikit-learn>=1.5      # M-estimation utilities, cross-validation
+
+# Plotting (Paul Tol palette via experiments/_plot_style.py)
+matplotlib>=3.9
+
+# Feed access / geospatial (uncomment as the routing pipeline lands)
+requests>=2.32         # GBFS feed polling
+# osmnx>=1.9           # OpenStreetMap cycling-network routing for cost features
+# networkx>=3.3        # graph utilities
+
+# Reproducibility helpers
+tqdm>=4.66

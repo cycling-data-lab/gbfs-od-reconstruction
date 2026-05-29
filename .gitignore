@@ -1,0 +1,44 @@
+# LaTeX
+*.aux
+*.log
+*.out
+*.bbl
+*.blg
+*.toc
+*.fdb_latexmk
+*.fls
+*.synctex.gz
+*.run.xml
+*.bcf
+*.nav
+*.snm
+*.vrb
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.venv*/
+
+# Data caches (large)
+outputs/_*.npz
+outputs/_*.csv
+outputs/_*.parquet
+outputs/_*.txt
+outputs/_*.log
+outputs/_*.json.gz
+
+# Experiment run logs
+logs/
+
+# Private research notes (move to a separate branch if needed)
+RESEARCH_NOTES.md
+
+# Claude Code runtime
+.claude/
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/

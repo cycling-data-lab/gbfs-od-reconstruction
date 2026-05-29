@@ -1,0 +1,229 @@
+% ============================================================================
+% references.bib -- gbfs-od-reconstruction
+% Seeded with the core literature spanning the five clusters the paper sits
+% across: count-based OD estimation, identifier-based micromobility OD
+% inference, censored-demand correction, inverse / ground-metric optimal
+% transport, and entropic-OT statistics.  Verified via the OD literature
+% review in the sibling bikeshare-data-explorer repository.  Run a DOI check
+% before submission.
+% ============================================================================
+
+% ---- Count-based OD estimation (the macro regime) -------------------------
+@article{Wilson1967,
+  author  = {Wilson, Alan G.},
+  title   = {A statistical theory of spatial distribution models},
+  journal = {Transportation Research},
+  volume  = {1}, number = {3}, pages = {253--269}, year = {1967},
+  doi     = {10.1016/0041-1647(67)90035-4}
+}
+
+@article{VanZuylenWillumsen1980,
+  author  = {Van Zuylen, Henk J. and Willumsen, Luis G.},
+  title   = {The most likely trip matrix estimated from traffic counts},
+  journal = {Transportation Research Part B: Methodological},
+  volume  = {14}, number = {3}, pages = {281--293}, year = {1980},
+  doi     = {10.1016/0191-2615(80)90008-9}
+}
+
+@article{Cascetta1984,
+  author  = {Cascetta, Ennio},
+  title   = {Estimation of trip matrices from traffic counts and survey data:
+             a generalized least squares estimator},
+  journal = {Transportation Research Part B: Methodological},
+  volume  = {18}, number = {4--5}, pages = {289--299}, year = {1984},
+  doi     = {10.1016/0191-2615(84)90012-2}
+}
+
+@article{Spiess1987,
+  author  = {Spiess, Heinz},
+  title   = {A maximum likelihood model for estimating origin-destination matrices},
+  journal = {Transportation Research Part B: Methodological},
+  volume  = {21}, number = {5}, pages = {395--412}, year = {1987},
+  doi     = {10.1016/0191-2615(87)90037-3}
+}
+
+@article{CascettaNguyen1988,
+  author  = {Cascetta, Ennio and Nguyen, Sang},
+  title   = {A unified framework for estimating or updating origin/destination
+             matrices from traffic counts},
+  journal = {Transportation Research Part B: Methodological},
+  volume  = {22}, number = {6}, pages = {437--455}, year = {1988},
+  doi     = {10.1016/0191-2615(88)90024-0}
+}
+
+@article{Bell1991,
+  author  = {Bell, Michael G. H.},
+  title   = {The estimation of origin-destination matrices by constrained
+             generalised least squares},
+  journal = {Transportation Research Part B: Methodological},
+  volume  = {25}, number = {1}, pages = {13--22}, year = {1991},
+  doi     = {10.1016/0191-2615(91)90010-G}
+}
+
+@article{MaQian2023,
+  author  = {Ma, Wei and Qian, Zhen (Sean)},
+  title   = {Transportation origin--destination demand estimation with quasi-sparsity},
+  journal = {Transportation Science},
+  volume  = {57}, number = {2}, pages = {289--312}, year = {2023},
+  doi     = {10.1287/trsc.2022.1178}
+}
+
+% ---- Identifier-based micromobility OD inference (the micro regime) --------
+@article{Xu2022,
+  author  = {Xu, Yanjie and Yan, Xiang and Sisiopiku, Virginia P. and
+             Merlin, Louis A. and Xing, Fangzhou and Zhao, Xilei},
+  title   = {Micromobility trip origin and destination inference using
+             {General Bikeshare Feed Specification} data},
+  journal = {Transportation Research Record},
+  volume  = {2676}, number = {11}, year = {2022},
+  doi     = {10.1177/03611981221092005}
+}
+
+% ---- Censored demand ------------------------------------------------------
+@article{RudloffLackner2014,
+  author  = {Rudloff, Christian and Lackner, Bettina},
+  title   = {Modeling demand for bikesharing systems: neighboring stations as
+             source for demand and reason for structural breaks},
+  journal = {Transportation Research Record},
+  volume  = {2430}, pages = {1--11}, year = {2014},
+  doi     = {10.3141/2430-01}
+}
+
+@article{Negahban2019,
+  author  = {Negahban, Ashkan},
+  title   = {Simulation-based estimation of the real demand in bike-sharing
+             systems in the presence of censoring},
+  journal = {European Journal of Operational Research},
+  volume  = {277}, number = {1}, pages = {317--332}, year = {2019},
+  doi     = {10.1016/j.ejor.2019.02.013}
+}
+
+@techreport{Goh2019,
+  author      = {Goh, Chin Yang and Yan, Cheng and Jaillet, Patrick},
+  title       = {Estimating primary demand in bike-sharing systems},
+  institution = {SSRN Working Paper},
+  year        = {2019},
+  doi         = {10.2139/ssrn.3437201}
+}
+
+@article{OBrien2014,
+  author  = {O'Brien, Oliver and Cheshire, James and Batty, Michael},
+  title   = {Mining bicycle sharing data for generating insights into
+             sustainable transport systems},
+  journal = {Journal of Transport Geography},
+  volume  = {34}, pages = {262--273}, year = {2014},
+  doi     = {10.1016/j.jtrangeo.2013.11.003}
+}
+
+% ---- Optimal transport, Sinkhorn / IPF, inverse & ground-metric -----------
+@article{Sinkhorn1964,
+  author  = {Sinkhorn, Richard},
+  title   = {A relationship between arbitrary positive matrices and doubly
+             stochastic matrices},
+  journal = {The Annals of Mathematical Statistics},
+  volume  = {35}, number = {2}, pages = {876--879}, year = {1964},
+  doi     = {10.1214/aoms/1177703591}
+}
+
+@inproceedings{Cuturi2013,
+  author    = {Cuturi, Marco},
+  title     = {Sinkhorn distances: lightspeed computation of optimal transport},
+  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
+  volume    = {26}, year = {2013}
+}
+
+@article{CuturiAvis2014,
+  author  = {Cuturi, Marco and Avis, David},
+  title   = {Ground metric learning},
+  journal = {Journal of Machine Learning Research},
+  volume  = {15}, pages = {533--564}, year = {2014}
+}
+
+@article{PeyreCuturi2019,
+  author  = {Peyr\'e, Gabriel and Cuturi, Marco},
+  title   = {Computational optimal transport},
+  journal = {Foundations and Trends in Machine Learning},
+  volume  = {11}, number = {5--6}, pages = {355--607}, year = {2019},
+  doi     = {10.1561/2200000073}
+}
+
+@article{StuartWolfram2020,
+  author  = {Stuart, Andrew M. and Wolfram, Marie-Therese},
+  title   = {Inverse optimal transport},
+  journal = {SIAM Journal on Applied Mathematics},
+  volume  = {80}, number = {1}, pages = {599--619}, year = {2020},
+  doi     = {10.1137/19M1261122}
+}
+
+@article{DupuyGalichon2014,
+  author  = {Dupuy, Arnaud and Galichon, Alfred},
+  title   = {Personality traits and the marriage market},
+  journal = {Journal of Political Economy},
+  volume  = {122}, number = {6}, pages = {1271--1319}, year = {2014},
+  doi     = {10.1086/677191}
+}
+
+@article{GalichonSalanie2022,
+  author  = {Galichon, Alfred and Salani\'e, Bernard},
+  title   = {Cupid's invisible hand: social surplus and identification in
+             matching models},
+  journal = {The Review of Economic Studies},
+  volume  = {89}, number = {5}, pages = {2600--2629}, year = {2022},
+  doi     = {10.1093/restud/rdab090}
+}
+
+@inproceedings{Feydy2019,
+  author    = {Feydy, Jean and S\'ejourn\'e, Thibault and Vialard,
+               Fran\c{c}ois-Xavier and Amari, Shun-ichi and Trouv\'e, Alain
+               and Peyr\'e, Gabriel},
+  title     = {Interpolating between optimal transport and {MMD} using
+               {Sinkhorn} divergences},
+  booktitle = {International Conference on Artificial Intelligence and
+               Statistics (AISTATS)},
+  year      = {2019}
+}
+
+@inproceedings{Genevay2019,
+  author    = {Genevay, Aude and Chizat, L\'ena\"ic and Bach, Francis and
+               Cuturi, Marco and Peyr\'e, Gabriel},
+  title     = {Sample complexity of {Sinkhorn} divergences},
+  booktitle = {International Conference on Artificial Intelligence and
+               Statistics (AISTATS)},
+  year      = {2019}
+}
+
+@inproceedings{MenaNilesWeed2019,
+  author    = {Mena, Gonzalo and Niles-Weed, Jonathan},
+  title     = {Statistical bounds for entropic optimal transport: sample
+               complexity and the central limit theorem},
+  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
+  volume    = {32}, year = {2019}
+}
+
+@article{FranklinLorenz1989,
+  author  = {Franklin, Joel and Lorenz, Jens},
+  title   = {On the scaling of multidimensional matrices},
+  journal = {Linear Algebra and its Applications},
+  volume  = {114--115}, pages = {717--735}, year = {1989},
+  doi     = {10.1016/0024-3795(89)90490-4}
+}
+
+% ---- Network tomography (the telecom analogy) -----------------------------
+@article{Vardi1996,
+  author  = {Vardi, Yehuda},
+  title   = {Network tomography: estimating source-destination traffic
+             intensities from link data},
+  journal = {Journal of the American Statistical Association},
+  volume  = {91}, number = {433}, pages = {365--377}, year = {1996},
+  doi     = {10.1080/01621459.1996.10476697}
+}
+
+% ---- The standard ---------------------------------------------------------
+@misc{MobilityDataGBFS,
+  author       = {{MobilityData}},
+  title        = {{General Bikeshare Feed Specification (GBFS)}},
+  howpublished = {\url{https://github.com/MobilityData/gbfs}},
+  note         = {Identifier-rotation guidance: issue \#146; vehicle\_id
+                  rotation requirement from v2.0},
+  year         = {2024}
+}

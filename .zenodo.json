@@ -1,0 +1,36 @@
+{
+  "title": "gbfs-od-reconstruction: Standard compliance bounds origin–destination identifiability in GBFS bike-sharing feeds",
+  "description": "Companion software, data, and LaTeX source for the manuscript 'Standard compliance bounds origin–destination identifiability in GBFS bike-sharing feeds: a cost-learning and sampling-horizon analysis' (R. Fossé and G. Pallares, in preparation for Computer Standards & Interfaces). The repository provides: (i) an identifiability characterisation of the entropic-OT/gravity cost learned from an identifier-tracked micro-sample (identifiable only modulo additive station effects); (ii) a selection-bias decomposition proving that station-emptiness censoring cancels while 60-second polling aliasing does not, and a sampling-horizon law T* scaling as δ⁻⁴ and 1/q with a standard-compliance threshold; (iii) a feed-by-feed audit protocol and pilot that measures the five governing constants (q, κ, β, γ, Λ). Each numbered experiment script reproduces a specific table or figure.",
+  "upload_type": "software",
+  "access_right": "open",
+  "license": "MIT",
+  "keywords": [
+    "GBFS",
+    "origin–destination reconstruction",
+    "data-standard compliance",
+    "entropic optimal transport",
+    "shared micromobility"
+  ],
+  "creators": [
+    {
+      "name": "Fossé, Rohan",
+      "affiliation": "CESI Engineering School, Montpellier, France",
+      "orcid": "0009-0002-2195-0198"
+    },
+    {
+      "name": "Pallares, Gaël",
+      "affiliation": "CESI LINEACT (EA 7527), Montpellier, France",
+      "orcid": "0009-0002-8680-604X"
+    }
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "https://github.com/cycling-data-lab/gbfs-od-reconstruction",
+      "relation": "isSupplementTo",
+      "scheme": "url",
+      "resource_type": "software"
+    }
+  ],
+  "language": "eng",
+  "notes": "Companion software release for the Computer Standards & Interfaces submission. The git tag 'v1.0' marks the snapshot submitted. Reproducibility: SEED=42 master seed, dependencies pinned in requirements.txt, Python 3.12."
+}

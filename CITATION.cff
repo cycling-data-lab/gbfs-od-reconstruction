@@ -1,0 +1,47 @@
+cff-version: 1.2.0
+message: "If you use this software or the accompanying manuscript, please cite as below."
+title: "gbfs-od-reconstruction: Standard compliance bounds origin–destination identifiability in GBFS bike-sharing feeds"
+type: software
+version: "0.1-draft"
+date-released: "2026-05-29"
+authors:
+  - family-names: "Fossé"
+    given-names: "Rohan"
+    orcid: "https://orcid.org/0009-0002-2195-0198"
+    affiliation: "CESI Engineering School, Montpellier, France"
+    email: "rfosse@cesi.fr"
+  - family-names: "Pallares"
+    given-names: "Gaël"
+    orcid: "https://orcid.org/0009-0002-8680-604X"
+    affiliation: "CESI LINEACT (EA 7527), Montpellier, France"
+repository-code: "https://github.com/cycling-data-lab/gbfs-od-reconstruction"
+url: "https://github.com/cycling-data-lab/gbfs-od-reconstruction"
+license: MIT
+keywords:
+  - "GBFS"
+  - "origin–destination reconstruction"
+  - "data-standard compliance"
+  - "entropic optimal transport"
+  - "shared micromobility"
+abstract: >-
+  A hybrid macro/micro framework for reconstructing origin–destination flows
+  from GBFS bike-sharing feeds. The transport cost learned from an
+  identifier-tracked micro-sample is identifiable only modulo additive station
+  effects, and the observation bias equals the non-separable part of the
+  log-selection probability — so station-emptiness censoring cancels while
+  60-second polling aliasing does not. The estimator yields a sampling-horizon
+  law (T* scales as δ⁻⁴ and 1/q), implying a GBFS standard-compliance threshold
+  below which operational OD monitoring is infeasible.
+preferred-citation:
+  type: article
+  title: "Standard compliance bounds origin–destination identifiability in GBFS bike-sharing feeds: a cost-learning and sampling-horizon analysis"
+  authors:
+    - family-names: "Fossé"
+      given-names: "Rohan"
+      orcid: "https://orcid.org/0009-0002-2195-0198"
+    - family-names: "Pallares"
+      given-names: "Gaël"
+      orcid: "https://orcid.org/0009-0002-8680-604X"
+  journal: "Computer Standards & Interfaces"
+  year: 2026
+  notes: "In preparation; preprint at the repository URL."

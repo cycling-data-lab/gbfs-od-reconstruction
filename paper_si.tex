@@ -1,0 +1,154 @@
+% !TEX TS-program = pdflatex
+% !TEX encoding = UTF-8 Unicode
+% !BIB TS-program = bibtex
+%
+% ============================================================================
+% paper_si.tex -- Supplementary Information for
+%   "Standard compliance bounds origin--destination identifiability in GBFS
+%    bike-sharing feeds: a cost-learning and sampling-horizon analysis."
+%
+% Compiles independently with iopjournal.cls + references/references.bib.
+% (See the SUBMISSION NOTE in paper.tex re: switching to elsarticle.)
+% ============================================================================
+\documentclass{iopjournal}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{microtype}
+\usepackage{csquotes}
+\usepackage{amssymb,amsmath,amstext,amsthm}
+
+\graphicspath{{figures/}}
+
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{float}
+\usepackage{enumitem}
+\setlist{topsep=2pt,itemsep=2pt,parsep=0pt}
+\usepackage{url}
+
+\usepackage[authoryear,round]{natbib}
+\bibliographystyle{plainnat}
+
+\IfFileExists{orcid.pdf}{}{%
+  \renewcommand{\orcid}[1]{\textsuperscript{\href{https://orcid.org/##1}{\textsf{[ORCID]}}}}%
+}
+
+\newcommand{\journalname}{Computer Standards \& Interfaces}
+\newcommand{\journalshort}{Comput.\ Stand.\ Interfaces}
+
+\usepackage{fancyhdr}
+\fancyhead[L]{{\small \sf Preprint --- working draft}\hspace{5mm}%
+              {\it \journalshort}\ (submitted)%
+              \hspace{2mm}\textsf{(SI)}}
+\fancyhead[R]{Foss\'e {\it et al}\ (SI)}
+\fancyhead[C]{}
+\widowpenalty=10000
+\clubpenalty=10000
+\displaywidowpenalty=10000
+\raggedbottom
+
+\makeatletter
+\renewcommand{\articletype}[1]{%
+   {\vspace*{-8mm}\noindent \Large \sf \journalname%
+       \hspace{1em}\normalsize\itshape Supplementary Information}%
+   \vspace*{8mm} \noindent\reversemarginpar
+   \marginpar{\vspace{-3mm} {\color{gray}\hrule} \ \\ Preprint\\
+       {\color{gray}\hrule} \ \\
+       \tiny {\sf VERSION} {\small \\ v0.1 draft}}%
+   {\scriptsize \sf{\bfseries \MakeUppercase{#1}}}}
+\makeatother
+
+% SI appendix-style numbering : Section A, A.1, etc.
+\renewcommand{\thesection}{\Alph{section}}
+\renewcommand{\thesubsection}{\Alph{section}.\arabic{subsection}}
+\renewcommand{\theequation}{\Alph{section}.\arabic{equation}}
+\renewcommand{\thetable}{\Alph{section}.\arabic{table}}
+\renewcommand{\thefigure}{\Alph{section}.\arabic{figure}}
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+\renewcommand{\thetheorem}{\Alph{section}.\arabic{theorem}}
+
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Ncal}{\mathcal{N}}
+\newcommand{\Pperp}{\Pi_{\Ncal^\perp}}
+\newcommand{\OD}{\mathrm{OD}}
+\newcommand{\neff}{n_{\mathrm{eff}}}
+\newcommand{\Tstar}{T^{\star}}
+\newcommand{\Pstar}{P^{\star}}
+\newcommand{\cstar}{c^{\star}}
+
+\newcommand{\maintext}[1]{(main text, Sec.~#1)}
+\newcommand{\Todo}[1]{\textbf{[To confirm: #1]}}
+
+\begin{document}
+
+\articletype{Supplementary Information}
+
+\title{Supplementary Information for ``Standard compliance bounds
+origin--destination identifiability in GBFS bike-sharing feeds''}
+
+\author{Rohan Foss\'e$^{1,*}$\orcid{0009-0002-2195-0198},
+        Ga\"el Pallares$^{2}$\orcid{0009-0002-8680-604X}}
+
+\affil{$^{1}$ CESI \'Ecole d'Ing\'enieurs, Montpellier, France
+       \quad$^{2}$ CESI LINEACT (EA 7527), Montpellier, France\\[0.2em]
+       $^{*}$ Author to whom any correspondence should be addressed.}
+
+\email{rfosse@cesi.fr}
+
+\begin{abstract}
+This supplementary information accompanies the manuscript \emph{Standard
+compliance bounds origin--destination identifiability in GBFS bike-sharing
+feeds} \maintext{1--10}. Appendix~\ref{sec:si-A} proves the cost
+identifiability theorem and the selection-bias decomposition;
+Appendix~\ref{sec:si-B} proves the forward-stability lemma and the
+sampling-horizon law; Appendix~\ref{sec:si-C} details the constant-estimation
+procedures used in the pilot.
+\end{abstract}
+
+% ============================================================================
+\section{Identifiability and the selection-bias decomposition}
+\label{sec:si-A}
+
+\Todo{Proof of main-text Theorem (cost identifiable modulo $\Ncal$) via the
+two-way fixed-effect / ground-metric argument; proof of
+$\Pperp\hat c\to\Pperp\cstar-\varepsilon\Pperp\log S$, and the corollary that
+separable selection $S_{ij}=a_ib_j$ gives zero bias while a duration-dependent
+capture probability $S_{ij}=h(t_{ij})$ does not. Worked example: attenuation
+of the distance coefficient as a function of $\Delta$.}
+
+% ============================================================================
+\section{Forward stability and the sampling-horizon law}
+\label{sec:si-B}
+
+\Todo{Sensitivity lemma for the entropic-OT coupling w.r.t.\ the cost
+($\partial P/\partial c$, Hilbert-metric contraction, $O(1/\varepsilon)$);
+the $\varepsilon$ bias--variance balance giving the $n^{-1/4}$ OD rate; and
+the resulting horizon $\Tstar\propto\delta_\OD^{-4}q^{-1}$ with the
+standard-compliance threshold. Discuss why the constants degrade at large
+$N$ and the role of $\lambda_{\min}$.}
+
+% ============================================================================
+\section{Constant-estimation procedures (pilot)}
+\label{sec:si-C}
+
+\Todo{Estimators for $q$ (identifier persistence), $\kappa(\Delta)$ (aliasing
+curve by interval subsampling), $\beta$ (rebalancing fraction), $\gamma$
+(jitter/collision loss), $\Lambda$ (trips/day), and $\lambda_{\min}$ (projected
+feature Gram). Cross-reference \texttt{experiments/d01\_pilot.py}.}
+
+% ============================================================================
+\section*{References}
+\bibliography{references/references}
+
+\end{document}

@@ -1,0 +1,419 @@
+% !TEX TS-program = pdflatex
+% !TEX encoding = UTF-8 Unicode
+% !BIB TS-program = bibtex
+%
+% ============================================================================
+% paper.tex -- Standard compliance bounds origin--destination identifiability
+%              in GBFS bike-sharing feeds: a cost-learning and sampling-horizon
+%              analysis.
+%
+% Target  : Computer Standards & Interfaces (Elsevier).
+% Authors : R. Fosse and G. Pallares, CESI LINEACT (EA 7527), Montpellier, 2026.
+%
+% >>> SUBMISSION NOTE <<<
+%   This repository was scaffolded from the org's IOP `paper-template` and
+%   therefore ships `iopjournal.cls`.  Computer Standards & Interfaces is an
+%   ELSEVIER journal: before submission, switch to
+%       \documentclass[review,3p,times]{elsarticle}
+%   and migrate the IOP back-matter macros (\ack, \funding, \roles, \data)
+%   into an elsarticle \begin{frontmatter}...\end{frontmatter} block plus a
+%   CRediT author-statement.  The body, theorems and bibliography are
+%   class-agnostic and carry over unchanged.  See README.md (section
+%   "Submission: switching to elsarticle").
+%
+% Companion files :
+%   paper_si.tex                 -- Supplementary Information (proofs)
+%   references/references.bib    -- BibTeX
+%   figures/                     -- publication figures (PDF)
+%   experiments/d{NN}_{name}.py  -- reproducible scripts
+%
+% Compile :
+%   pdflatex paper.tex && bibtex paper && pdflatex paper.tex && pdflatex paper.tex
+% ============================================================================
+\documentclass{iopjournal}      % add [anonymous] for double-anonymous review
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{microtype}
+\usepackage{csquotes}
+\usepackage{amssymb,amsmath,amstext,amsthm}
+
+\graphicspath{{figures/}}
+
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{float}
+\usepackage{enumitem}
+\setlist{topsep=2pt,itemsep=2pt,parsep=0pt}
+\usepackage{url}
+
+\usepackage[authoryear,round]{natbib}
+\bibliographystyle{plainnat}
+
+\IfFileExists{orcid.pdf}{}{%
+  \renewcommand{\orcid}[1]{\textsuperscript{\href{https://orcid.org/##1}{\textsf{[ORCID]}}}}%
+}
+
+% Target journal (rendered in the banner).  See SUBMISSION NOTE above.
+\newcommand{\journalname}{Computer Standards \& Interfaces}
+\newcommand{\journalshort}{Comput.\ Stand.\ Interfaces}
+
+\usepackage{fancyhdr}
+\fancyhead[L]{{\small \sf Preprint --- working draft}\hspace{5mm}%
+              {\it \journalshort}\ (submitted)}
+\fancyhead[R]{Foss\'e {\it et al}\ }
+\fancyhead[C]{}
+
+\widowpenalty=10000
+\clubpenalty=10000
+\displaywidowpenalty=10000
+\raggedbottom
+
+\makeatletter
+\renewcommand{\articletype}[1]{%
+   {\vspace*{-8mm}\noindent \Large \sf \journalname}%
+   \vspace*{8mm} \noindent\reversemarginpar
+   \marginpar{\vspace{-3mm} {\color{gray}\hrule} \ \\ Preprint\\
+       {\color{gray}\hrule} \ \\
+       \tiny {\sf VERSION} {\small \\ v0.1 draft}\\ \\
+       {\sf TARGET} {\small \\ \journalshort}}%
+   {\scriptsize \sf{\bfseries \MakeUppercase{#1}}}}
+\makeatother
+
+% Theorem environments
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{conjecture}[theorem]{Conjecture}
+
+% Math shortcuts for this paper
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Ncal}{\mathcal{N}}              % separable null space {f_i + g_j}
+\newcommand{\Pperp}{\Pi_{\Ncal^\perp}}        % projection onto the identifiable part
+\newcommand{\KL}{\mathrm{KL}}
+\newcommand{\OD}{\mathrm{OD}}
+\newcommand{\neff}{n_{\mathrm{eff}}}
+\newcommand{\Tstar}{T^{\star}}
+\newcommand{\Pstar}{P^{\star}}
+\newcommand{\cstar}{c^{\star}}
+
+% Drafting marker -- remove all uses before v1.0.
+\newcommand{\Todo}[1]{\textbf{[To confirm: #1]}}
+
+% =========================================================================
+\begin{document}
+
+\articletype{Paper}
+
+\title{Standard compliance bounds origin--destination identifiability in
+GBFS bike-sharing feeds: a cost-learning and sampling-horizon analysis}
+
+\author{Rohan Foss\'e$^{1,*}$\orcid{0009-0002-2195-0198},
+        Ga\"el Pallares$^{2}$\orcid{0009-0002-8680-604X}}
+
+\affil{$^{1}$ CESI \'Ecole d'Ing\'enieurs, Montpellier, France
+       \quad$^{2}$ CESI LINEACT (EA 7527), Montpellier, France\\[0.2em]
+       $^{*}$ Author to whom any correspondence should be addressed.}
+
+\email{rfosse@cesi.fr}
+
+\keywords{GBFS; origin--destination reconstruction; data-standard compliance;
+entropic optimal transport; shared micromobility}
+
+\begin{abstract}
+Reconstructing origin--destination (OD) flows from public bike-sharing feeds
+is split between two regimes: macroscopic inference from station stock
+counts, which is underdetermined, and deterministic tracking of per-vehicle
+identifiers, which is exposed to temporal aliasing and to the
+privacy-driven rotation of identifiers recommended by the GBFS standard.
+We recast the problem as a hybrid in which a partial, identifier-tracked
+micro-sample supplies the deterrence (cost) structure of an entropic
+optimal-transport / gravity model whose margins are pinned by the station
+counts. Two results follow. First, the transport cost is identifiable only
+modulo additive station effects; the bias induced by incomplete observation
+equals the \emph{non-separable} component of the log-selection probability,
+so station-emptiness censoring cancels exactly, whereas 60-second
+polling---whose capture probability is a function of travel time, the very
+quantity being estimated---does not. Second, the estimator yields a
+\emph{sampling-horizon law}: the continuous-collection time needed to
+reconstruct OD to target accuracy $\delta$ scales as $\delta^{-4}$ and
+inversely with the identifier-persistence rate $q$. The law implies a
+standard-compliance threshold below which operational OD monitoring is
+infeasible. We give a feed-by-feed audit protocol instantiating the bound
+across \Todo{$N$} French networks.
+\Todo{insert headline numbers from the pilot once collected.}
+\end{abstract}
+
+% =========================================================================
+\section{Introduction}
+\label{sec:intro}
+
+\Todo{Three paragraphs. (1) OD flows are the primitive of bike-sharing
+planning, rebalancing and equity analysis, yet public GBFS feeds were
+designed to advertise availability, not to record trips; the literature is
+cleaved into underdetermined count-based inference and identifier-based
+tracking, each with a distinct failure mode. (2) Our reframe: feasibility
+of reconstruction is not a modelling choice but a function of how far a feed
+complies with the GBFS identifier-rotation guidance and of the polling
+cadence; we make this quantitative. (3) Contributions and roadmap:
+an identifiability characterisation (Sec.~\ref{sec:identif}), a
+selection-bias decomposition isolating aliasing as the dominant threat
+(Sec.~\ref{sec:bias}), a sampling-horizon law and a standard-compliance
+threshold (Sec.~\ref{sec:horizon}), and a feed-by-feed audit protocol with
+a pilot (Sec.~\ref{sec:empirics}).}
+
+% =========================================================================
+\section{Data regimes, model and notation}
+\label{sec:setup}
+
+\Todo{Prose introducing the three regimes (published trips; station-status
+counts; persistent-identifier tracking) and positioning our hybrid between
+the latter two.}
+
+Let stations be indexed $i,j\in\{1,\dots,N\}$ and let $\Pstar\in\R_{\ge
+0}^{N\times N}$ be the true OD coupling over a fixed period, with row
+margins $r^\star_i=\sum_j \Pstar_{ij}$ (outflow) and column margins
+$c^\star_j=\sum_i \Pstar_{ij}$ (inflow). The structural (gravity / entropic
+optimal-transport) assumption is the Gibbs form
+\begin{equation}
+\label{eq:gibbs}
+\Pstar_{ij} = u^\star_i\, v^\star_j\, e^{-\cstar_{ij}/\varepsilon},
+\end{equation}
+for potentials $u^\star,v^\star$, ground cost $\cstar$ and temperature
+$\varepsilon>0$. This is the maximum-entropy trip-distribution model
+\citep{Wilson1967} and is identical, as an algorithm, to iterative
+proportional fitting and to the Sinkhorn iteration for entropic optimal
+transport \citep{Sinkhorn1964,Cuturi2013,PeyreCuturi2019}.
+
+\paragraph{Macro observation (censored margins).}
+Station-status counts provide noisy, right-censored margins
+$\hat r_i = \rho_i\, r^\star_i$ with availability fraction $\rho_i\in(0,1]$,
+reflecting demand lost at empty/full stations \citep{RudloffLackner2014,
+Negahban2019}.
+
+\paragraph{Micro observation (selection-tilted sample).}
+A sub-sample of identifier-tracked trips is drawn from the
+\emph{selection-tilted} law $\tilde P_{ij}\propto \Pstar_{ij}\,S_{ij}$,
+where $S_{ij}\in[0,1]$ aggregates identifier persistence $q$, non-rebalancing
+$(1-\beta)$, and capture under polling interval $\Delta$ (anti-aliasing)
+$\kappa$.
+
+% =========================================================================
+\section{Identifiability of the interaction cost}
+\label{sec:identif}
+
+The Gibbs form \eqref{eq:gibbs} is invariant under
+$\cstar_{ij}\mapsto \cstar_{ij}+f_i+g_j$ (absorbed into the potentials).
+Hence the cost is identifiable only modulo the separable subspace
+$\Ncal=\{(f_i+g_j)_{ij}\}$ ($\dim\Ncal=2N-1$); the identifiable object is
+the interaction part $\Pperp \cstar$, equivalently the second-order
+cross-differences $c_{ij}-c_{il}-c_{kj}+c_{kl}$.
+
+\begin{theorem}[Cost identifiability]
+\label{thm:identif}
+Under \eqref{eq:gibbs}, $\Pperp\cstar$ is identifiable from a coupling, and
+no separable component of $\cstar$ is. \Todo{State regularity conditions;
+proof by the matching/ground-metric argument of \citet{GalichonSalanie2022,
+DupuyGalichon2014,CuturiAvis2014}; full proof in SI Appendix~A.}
+\end{theorem}
+
+\begin{definition}[Admissible cost feature]
+\label{def:admissible}
+A candidate feature $\psi_{ij}=\phi^{(k)}(x_i,x_j)$ is \emph{admissible} iff it
+survives two-way (origin/destination) centring,
+$\tilde\psi_{ij}=\psi_{ij}-\bar\psi_{i\cdot}-\bar\psi_{\cdot j}+\bar\psi_{\cdot\cdot}
+\neq 0$; monadic features ($\psi_{ij}=a_i$ or $b_j$) are inadmissible and
+belong in the potentials/margins, not the cost.
+\end{definition}
+
+\Todo{Discuss the low-rank parametric cost $c_{ij}=\phi(x_i,x_j;\theta)$:
+admissible, mutually non-collinear-after-projection dyadic features ---
+routed cycling distance, \emph{directed} elevation gain, circuity, protected-lane
+fraction, barrier (river/rail) crossings. Conditioning $\lambda_{\min}$ of the
+projected information matrix is what keeps the collection horizon finite
+(Sec.~\ref{sec:horizon}).}
+
+% =========================================================================
+\section{The selection-bias decomposition}
+\label{sec:bias}
+
+\begin{proposition}[Bias = non-separable log-selection]
+\label{prop:bias}
+The micro-sample identifies the cost of $\tilde P$, namely
+$\tilde c = \cstar - \varepsilon\log S$; therefore the estimated identifiable
+cost satisfies
+\begin{equation}
+\label{eq:bias}
+\Pperp\hat c \;\xrightarrow{\,n\to\infty\,}\; \Pperp\cstar
+\;-\;\varepsilon\,\Pperp\log S .
+\end{equation}
+In particular, if the selection is separable, $S_{ij}=a_i b_j$, then
+$\log S\in\Ncal$ and the bias vanishes.
+\end{proposition}
+
+\begin{corollary}[Which censoring hurts]
+\label{cor:aliasing}
+Station-emptiness censoring acts at the origin/destination level
+($S_{ij}=a_i b_j$) and \emph{cancels} in the identifiable cost. Aliasing
+under polling interval $\Delta$ has capture probability that depends on the
+trip duration $t_{ij}$, hence on $\cstar_{ij}$ itself; it is
+\emph{non-separable} and correlated with the estimand, so it does not cancel
+and systematically attenuates the cost--distance relationship. Residual
+operator rebalancing on specific corridors is likewise non-separable.
+\end{corollary}
+
+\Todo{Quantify the residual non-separable bias as a function of $\Delta$;
+proof of Prop.~\ref{prop:bias} in SI Appendix~A.}
+
+% =========================================================================
+\section{The sampling-horizon law}
+\label{sec:horizon}
+
+Writing $\Lambda$ for the trip-generation rate (trips/day), the number of
+clean, attributable observations after $T$ days of polling at interval
+$\Delta$ is
+\begin{equation}
+\label{eq:neff}
+\neff = \Lambda\,T\,\kappa(\Delta)\,q\,(1-\beta)\,(1-\gamma),
+\end{equation}
+with $\gamma$ the GPS-jitter / collision loss. Propagating the cost error
+through the entropic-OT forward map (sensitivity $O(1/\varepsilon)$,
+entropic bias $O(\varepsilon)$; balancing gives an $n^{-1/4}$ rate on the OD
+error) yields the requirement $\neff\gtrsim \dim\theta/(\lambda_{\min}\,
+\delta_\OD^{4})$ and hence the collection horizon.
+
+\begin{theorem}[Sampling-horizon law]
+\label{thm:horizon}
+To reconstruct the OD coupling to relative accuracy $\delta_\OD$ under the
+estimator of Sections~\ref{sec:identif}--\ref{sec:bias},
+\begin{equation}
+\label{eq:Tstar}
+\Tstar \;=\;
+\frac{\dim\theta}
+     {\lambda_{\min}\,\delta_\OD^{4}\;\Lambda\,\kappa(\Delta)\,q\,(1-\beta)(1-\gamma)} ,
+\end{equation}
+so $\Tstar\propto \delta_\OD^{-4}\,q^{-1}\,\Lambda^{-1}\,\lambda_{\min}^{-1}$.
+\Todo{State constants and the forward-stability lemma; proof in
+SI Appendix~B.}
+\end{theorem}
+
+\begin{corollary}[Standard-compliance threshold]
+\label{cor:threshold}
+For any operational horizon $T_{\max}$ and accuracy $\delta_\OD$, OD is
+reconstructible only on feeds with identifier persistence
+$q \ge q_{\min}:=\dim\theta/(\lambda_{\min}\delta_\OD^4 \Lambda
+\kappa(1-\beta)(1-\gamma)\,T_{\max})$. Below $q_{\min}$ the horizon exceeds
+$T_{\max}$ and operational monitoring is infeasible.
+\end{corollary}
+
+\Todo{Pooling rescue: a hierarchical cost shared across the $N$ networks
+divides $\dim\theta$ per city and buys down $\Tstar$; this is why the
+multi-system panel is statistically load-bearing, not merely comparative.
+Also state the comparability tension: a fixed $\varepsilon$ across cities
+imposes a precision floor $\delta_\OD\gtrsim\varepsilon$.}
+
+% =========================================================================
+\section{Empirical protocol and pilot}
+\label{sec:empirics}
+
+\Todo{The five constants $(q,\kappa,\beta,\gamma,\Lambda)$ are unknown and
+feed-specific; the protocol is a 7-day pilot that \emph{measures} them per
+feed (script \texttt{experiments/d01\_pilot.py}). $\hat q$: fraction of
+identifiers persisting origin-to-destination. $\hat\kappa(\Delta)$: by
+re-reconstructing at coarser intervals and measuring trip loss (the aliasing
+curve). $\hat\beta$: \texttt{is\_disabled} + departure-burst fraction.
+$\hat\Lambda$: reconstructed trips/day. $\lambda_{\min}$: smallest eigenvalue
+of the projected dyadic-feature Gram matrix. Instantiate \eqref{eq:Tstar}
+per network; produce the thesis figure $\Tstar$ vs $q$ with the
+operational-monitoring frontier and the \Todo{$N$} French feeds positioned on
+it.}
+
+% =========================================================================
+\section{Related work}
+\label{sec:related}
+
+\Todo{Position at the empty intersection of (i) count-based OD estimation
+\citep{VanZuylenWillumsen1980,Cascetta1984,CascettaNguyen1988,Spiess1987,
+Bell1991,MaQian2023}, (ii) identifier-based micromobility OD inference
+\citep{Xu2022}, (iii) censored-demand correction \citep{RudloffLackner2014,
+Negahban2019,Goh2019}, (iv) inverse / ground-metric optimal transport
+\citep{CuturiAvis2014,StuartWolfram2020,DupuyGalichon2014}, and (v) feed
+quality / standards auditing (our GBFS Audit Catalogue, Paper~01). One
+sentence of "what we add" per cluster. Note the equivalence
+IPF~$=$~Sinkhorn~$=$~gravity to pre-empt a novelty objection, and that
+network tomography \citep{Vardi1996} loses its identifying routing matrix in
+the station-count setting.}
+
+% =========================================================================
+\section{Discussion}
+\label{sec:discussion}
+
+\Todo{Standards reading: the GBFS identifier-rotation guidance (issue \#146;
+v2.0) is a privacy feature that simultaneously sets the ceiling on OD
+observability; Corollary~\ref{cor:threshold} turns this into a quantitative
+recommendation (a minimum persistence, or an explicit acknowledgement that
+OD is non-monitorable from compliant feeds). Connect to MDS and to the
+regulator-facing data path.}
+
+% =========================================================================
+\section{Limitations and future work}
+\label{sec:limits}
+
+\Todo{The Gibbs/low-rank-cost assumption is the binding modelling
+commitment; the bound is conditional on it. Constants in
+Theorem~\ref{thm:horizon} from entropic-OT stability can be loose at
+$N\sim 1500$ \citep{MenaNilesWeed2019,Genevay2019}. The estimator recovers
+the entropy-optimal representative, not pair-level OD; interior cells remain
+weakly identified. Validation against ground truth requires a feed that both
+exposes persistent identifiers and publishes trips---address head-on.}
+
+% =========================================================================
+\section{Methods}
+\label{sec:methods}
+
+\Todo{Reproducibility-grade Methods: feed catalogue and discovery, the
+vehicle snapshot collector (60\,s), trip reconstruction (min-move,
+rebalancing heuristics), the cost-feature pipeline (routing, elevation,
+infrastructure layers), the inverse-OT cost estimator, the forward Sinkhorn
+solver, and the constant-estimation procedures. Software stack with version
+pins; SEED $=42$.}
+
+% =========================================================================
+% Back matter -- iopjournal native commands.  Under [anonymous] all but
+% \data are auto-redacted.  Migrate into elsarticle \frontmatter at submission.
+% =========================================================================
+
+\ack{\Todo{Acknowledgements.}}
+
+\funding{\Todo{Funding sources and grant numbers.}}
+
+\roles{\Todo{CRediT role assignments per author.}}
+
+\data{All data sources and per-experiment derived outputs are released under
+the MIT licence at
+\url{https://github.com/cycling-data-lab/gbfs-od-reconstruction}. A frozen
+Zenodo snapshot of the v1.0 release tag is deposited at
+\url{https://doi.org/10.5281/zenodo.XXXXXXX} \Todo{substitute the issued
+Zenodo DOI after the first release}.}
+
+\section*{Reproducibility}
+Each table and figure is produced by a numbered script
+\texttt{experiments/d<NN>\_<name>.py} that consumes a known input cache,
+writes a named output JSON, and pins \texttt{SEED=42}.
+\Todo{Add experiment-specific reproducibility detail here.}
+
+\section*{Competing interests}
+The authors declare no competing financial or non-financial interests.
+
+% =========================================================================
+\section*{References}
+\bibliography{references/references}
+
+\end{document}
