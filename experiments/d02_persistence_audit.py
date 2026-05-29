@@ -18,18 +18,30 @@ return it reappears. Two regimes:
   * rotating identifier (GBFS v2.0 privacy guidance) -> the id never returns;
     it terminates, and a fresh id appears for the returned vehicle.
 
-Both events are measured in ELAPSED TIME against the poll cadence, not by row
-rank, so that empty polls or windows where every vehicle is simultaneously out
-do not collapse the timeline (this was the subtle failure of a rank-based
-index). Let `poll_s` be the median inter-snapshot interval. For each id:
+Events are measured by RANK over the observed poll grid (the sorted distinct
+fetch instants of this feed), which is robust to the dominant real-world
+artifact: a *missed collection poll*. A poll the collector skipped simply is
+not a grid instant, so two observations straddling it stay rank-adjacent and do
+NOT fake a trip — whereas snapping to a fixed clock or differencing elapsed time
+would count every missed poll as a disappearance for every vehicle (verified on
+live data: feeds that lost one poll otherwise reported q=1.0 spuriously, with
+linked == n_vehicles). Let grid rank r(t) index the distinct fetch instants
+0..T-1. For each id:
 
-  * a "linked disappearance" = two consecutive observations separated by more
-    than POLL_GAP_FACTOR * poll_s (the id vanished for >= ~1 poll and came back);
-  * a "terminal disappearance" = the id's last observation precedes the feed's
-    end by more than REAPPEAR_MARGIN_POLLS * poll_s (it vanished with room to
-    have returned, and did not).
+  * a "linked disappearance" = consecutive observations whose grid ranks differ
+    by more than 1 (the id was absent across >= 1 poll the feed still served to
+    other vehicles, then came back);
+  * a "terminal disappearance" = the id's last observation has rank
+    <= T-1-REAPPEAR_MARGIN_POLLS (it vanished with room to have returned, and
+    did not).
 
     q_hat = linked / (linked + terminal)
+
+Blind spot (documented): a window in which EVERY vehicle is simultaneously out
+produces no grid instant, so a trip spanning it is missed. This is implausible
+for feeds with many vehicles but real for tiny ones, so q on feeds with
+< MIN_VEHICLES_RELIABLE vehicles is flagged low-confidence (q_reliable=False).
+`n_grid_gaps` reports detected missed polls.
 
 The MIN_MOVE_M distance threshold is a DIAGNOSTIC only (reported as
 `frac_linked_moved`); it does NOT gate q, so the numerator and denominator are
@@ -81,9 +93,10 @@ SEED = 42
 
 # Audit parameters
 MIN_MOVE_M = 100.0            # DIAGNOSTIC only (frac_linked_moved); does NOT gate q
-POLL_GAP_FACTOR = 1.5         # absence > factor * poll_s  => a disappearance gap
-REAPPEAR_MARGIN_POLLS = 10    # terminal needs this many polls of remaining window
+POLL_GAP_FACTOR = 1.5         # inter-snapshot delta > factor*poll_s => a missed poll
+REAPPEAR_MARGIN_POLLS = 10    # terminal needs this many grid ranks of remaining window
 MIN_SNAPSHOTS = 12            # must exceed REAPPEAR_MARGIN_POLLS+1, else q undefined
+MIN_VEHICLES_RELIABLE = 20    # below this, all-out outages plausible -> q low-confidence
 ROTATING_MAX = 0.20           # q_hat below -> "rotating" (privacy-compliant)
 PERSISTENT_MIN = 0.60         # q_hat at/above -> "persistent" (trackable)
 
@@ -148,28 +161,28 @@ def audit_feed(df: pd.DataFrame, system_id: str) -> dict:
                    frac_seen_once=None, persistence_class="undetermined")
         return rec
 
-    gap_s = POLL_GAP_FACTOR * poll_s
-    cutoff = feed_end - np.timedelta64(int(REAPPEAR_MARGIN_POLLS * poll_s), "s")
+    safe_rank = T - 1 - REAPPEAR_MARGIN_POLLS
+    n_grid_gaps = int(np.sum(deltas > POLL_GAP_FACTOR * poll_s))  # missed collection polls
 
-    linked = 0          # id vanished for > gap_s and reappeared
+    linked = 0          # id absent across >=1 served poll, then reappeared (same id)
     linked_moved = 0    # of those, moved >= MIN_MOVE_M (diagnostic)
     linked_rebal = 0    # of those, touched is_disabled (rebalancing proxy)
-    terminal = 0        # id's last obs precedes cutoff and never returned
+    terminal = 0        # id's last obs at rank <= safe_rank, never returned
     seen_once = 0
     obs_counts: list[int] = []
 
     df = df.sort_values(["vehicle_id", "fetched_at"])
     for _vid, g in df.groupby("vehicle_id", sort=False):
-        t = g["fetched_at"].to_numpy()
+        ot = g["fetched_at"].to_numpy()
+        ranks = np.searchsorted(uniq, ot)             # position in the observed poll grid
         lat = g["lat"].to_numpy(dtype=float)
         lon = g["lon"].to_numpy(dtype=float)
         dis = g["is_disabled"].to_numpy()
-        obs_counts.append(len(t))
-        if len(t) == 1:
+        obs_counts.append(len(ot))
+        if len(ot) == 1:
             seen_once += 1
-        for a in range(len(t) - 1):
-            dt_s = (t[a + 1] - t[a]) / np.timedelta64(1, "s")
-            if dt_s > gap_s:                              # a disappearance gap
+        for a in range(len(ranks) - 1):
+            if ranks[a + 1] - ranks[a] > 1:           # absent across >=1 served poll
                 linked += 1
                 if bool(dis[a]) or bool(dis[a + 1]):
                     linked_rebal += 1
@@ -177,7 +190,7 @@ def audit_feed(df: pd.DataFrame, system_id: str) -> dict:
                         or np.isnan(lat[a + 1]) or np.isnan(lon[a + 1])):
                     if _haversine_m(lat[a], lon[a], lat[a + 1], lon[a + 1]) >= MIN_MOVE_M:
                         linked_moved += 1
-        if t[-1] < cutoff:                                # terminal disappearance
+        if ranks[-1] <= safe_rank:                    # terminal disappearance
             terminal += 1
 
     denom = linked + terminal
@@ -201,7 +214,9 @@ def audit_feed(df: pd.DataFrame, system_id: str) -> dict:
     rec.update(
         status="ok",
         q_hat=None if q_hat is None else round(q_hat, 4),
+        q_reliable=bool(q_hat is not None and n_vehicles >= MIN_VEHICLES_RELIABLE),
         linked=int(linked), terminal=int(terminal),
+        n_grid_gaps=int(n_grid_gaps),
         beta_hat=None if beta_hat is None else round(beta_hat, 4),
         frac_linked_moved=None if frac_moved is None else round(frac_moved, 4),
         lambda_per_day=None if lambda_per_day is None else round(lambda_per_day, 1),
