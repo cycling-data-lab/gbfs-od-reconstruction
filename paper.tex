@@ -10,22 +10,18 @@
 % Target  : Computer Standards & Interfaces (Elsevier).
 % Authors : R. Fosse and G. Pallares, CESI LINEACT (EA 7527), Montpellier, 2026.
 %
+% Structure: linear engineering/OR flow (Elsevier/CS&I), NOT Nature/Science --
+%   Intro -> Related Work (front) -> Formulation -> Theory (identifiability,
+%   bias) -> Sampling-horizon law -> Empirical audit (method folded in) ->
+%   Discussion/policy -> Conclusion. Long proofs live in the SI.
+%
 % >>> SUBMISSION NOTE <<<
-%   This repository was scaffolded from the org's IOP `paper-template` and
-%   therefore ships `iopjournal.cls`.  Computer Standards & Interfaces is an
-%   ELSEVIER journal: before submission, switch to
+%   Scaffolded from the org's IOP `paper-template`; ships `iopjournal.cls`.
+%   CS&I is an ELSEVIER journal: before submission switch to
 %       \documentclass[review,3p,times]{elsarticle}
 %   and migrate the IOP back-matter macros (\ack, \funding, \roles, \data)
-%   into an elsarticle \begin{frontmatter}...\end{frontmatter} block plus a
-%   CRediT author-statement.  The body, theorems and bibliography are
-%   class-agnostic and carry over unchanged.  See README.md (section
-%   "Submission: switching to elsarticle").
-%
-% Companion files :
-%   paper_si.tex                 -- Supplementary Information (proofs)
-%   references/references.bib    -- BibTeX
-%   figures/                     -- publication figures (PDF)
-%   experiments/d{NN}_{name}.py  -- reproducible scripts
+%   into an elsarticle \begin{frontmatter}...\end{frontmatter} + CRediT block.
+%   The body, theorems and bibliography are class-agnostic. See README.md.
 %
 % Compile :
 %   pdflatex paper.tex && bibtex paper && pdflatex paper.tex && pdflatex paper.tex
@@ -38,6 +34,7 @@
 \usepackage{csquotes}
 \usepackage{amssymb,amsmath,amstext,amsthm}
 
+\usepackage{graphicx}
 \graphicspath{{figures/}}
 
 \usepackage{booktabs}
@@ -75,12 +72,12 @@
    \vspace*{8mm} \noindent\reversemarginpar
    \marginpar{\vspace{-3mm} {\color{gray}\hrule} \ \\ Preprint\\
        {\color{gray}\hrule} \ \\
-       \tiny {\sf VERSION} {\small \\ v0.1 draft}\\ \\
+       \tiny {\sf VERSION} {\small \\ v0.2 draft}\\ \\
        {\sf TARGET} {\small \\ \journalshort}}%
    {\scriptsize \sf{\bfseries \MakeUppercase{#1}}}}
 \makeatother
 
-% Theorem environments
+% Theorem environments (shared counter: Thm 1, Def 2, Prop 3, Cor 4, Thm 5, Cor 6)
 \theoremstyle{plain}
 \newtheorem{theorem}{Theorem}
 \newtheorem{proposition}[theorem]{Proposition}
@@ -92,7 +89,7 @@
 \newtheorem{remark}[theorem]{Remark}
 \newtheorem{conjecture}[theorem]{Conjecture}
 
-% Math shortcuts for this paper
+% Math shortcuts
 \newcommand{\E}{\mathbb{E}}
 \newcommand{\R}{\mathbb{R}}
 \newcommand{\Ncal}{\mathcal{N}}              % separable null space {f_i + g_j}
@@ -106,6 +103,12 @@
 
 % Drafting marker -- remove all uses before v1.0.
 \newcommand{\Todo}[1]{\textbf{[To confirm: #1]}}
+
+% Figure-or-placeholder: includes the PDF if rendered, else a compile-safe box.
+% Usage: \figorplaceholder{basename}{width}{placeholder caption text}
+\newcommand{\figorplaceholder}[3]{%
+  \IfFileExists{figures/#1.pdf}{\includegraphics[width=#2]{#1}}{%
+    \fbox{\parbox[c][3.2cm][c]{#2}{\centering\footnotesize\Todo{#3}}}}}
 
 % =========================================================================
 \begin{document}
@@ -144,155 +147,252 @@ polling---whose capture probability is a function of travel time, the very
 quantity being estimated---does not. Second, the estimator yields a
 \emph{sampling-horizon law}: the continuous-collection time needed to
 reconstruct OD to target accuracy $\delta$ scales as $\delta^{-4}$ and
-inversely with the identifier-persistence rate $q$. The law implies a
+inversely with the identifier-persistence rate $q$, implying a
 standard-compliance threshold below which operational OD monitoring is
-infeasible. We give a feed-by-feed audit protocol instantiating the bound
-across \Todo{$N$} French networks.
-\Todo{insert headline numbers from the pilot once collected.}
+infeasible. An audit of \Todo{$N$} French free-floating networks instantiates
+the bound and exhibits a sharp bimodal split between standard-compliant
+(identifier-rotating, untrackable) and non-compliant (persistent, trackable)
+feeds.
 \end{abstract}
 
 % =========================================================================
 \section{Introduction}
 \label{sec:intro}
 
-\Todo{Three paragraphs. (1) OD flows are the primitive of bike-sharing
-planning, rebalancing and equity analysis, yet public GBFS feeds were
-designed to advertise availability, not to record trips; the literature is
-cleaved into underdetermined count-based inference and identifier-based
-tracking, each with a distinct failure mode. (2) Our reframe: feasibility
-of reconstruction is not a modelling choice but a function of how far a feed
-complies with the GBFS identifier-rotation guidance and of the polling
-cadence; we make this quantitative. (3) Contributions and roadmap:
-an identifiability characterisation (Sec.~\ref{sec:identif}), a
-selection-bias decomposition isolating aliasing as the dominant threat
-(Sec.~\ref{sec:bias}), a sampling-horizon law and a standard-compliance
-threshold (Sec.~\ref{sec:horizon}), and a feed-by-feed audit protocol with
-a pilot (Sec.~\ref{sec:empirics}).}
+Origin--destination (OD) matrices are the primitive of every operational and
+planning question in shared micromobility: fleet rebalancing, station siting,
+demand forecasting, and the equity audits that increasingly condition public
+funding all consume an OD matrix as input. Yet the data that operators expose
+publicly was never designed to carry it. The General Bikeshare Feed
+Specification (GBFS), the de-facto open standard adopted by well over a
+thousand systems worldwide, is a \emph{real-time availability} interface: it
+advertises which vehicles are where, right now, and explicitly does not record
+what happened between two states. OD must therefore be \emph{reconstructed},
+and the literature is cleaved along the only two routes the data permits.
+
+The first route is macroscopic: treat the per-station stock changes as link or
+node counts and invert. This is the classical OD-from-counts problem, and it is
+mathematically mature---but it is also \emph{underdetermined}: many matrices
+reproduce the same observed marginals, so the interior of the OD matrix is
+fixed by a prior, not by the data. The second route is microscopic: when a feed
+exposes a persistent per-vehicle identifier, individual vehicles can be tracked
+between snapshots and their trips read off directly. This route is exact in
+principle, but fragile in practice for two reasons that the literature treats as
+nuisances rather than first-class objects. It is degraded by \emph{temporal
+aliasing}, because polling at a finite cadence misses short or fast trips; and,
+more fundamentally, it is \emph{deliberately defeated by the standard itself},
+whose privacy guidance recommends rotating the vehicle identifier after every
+trip precisely to prevent the trip reconstruction the method relies on.
+
+This places the analyst in a paradox that, to our knowledge, has never been made
+quantitative: the very property that makes a feed useful for OD reconstruction
+(identifier persistence) is the property the standard asks operators to remove.
+We argue that the feasibility of OD reconstruction is therefore not a modelling
+choice but a \emph{function of the feed's compliance with the standard}, and we
+make that dependence precise.
+
+\paragraph{Contributions.}
+We (i) recast OD reconstruction as a hybrid in which an identifier-tracked
+micro-sample supplies the cost structure of an entropic optimal-transport
+(equivalently, maximum-entropy gravity) model whose margins are pinned by the
+station counts (Section~\ref{sec:formulation}); (ii) prove that the learned cost
+is identifiable only modulo additive station effects, and decompose the
+observation bias into the \emph{non-separable} part of the log-selection
+probability, which shows that station-emptiness censoring cancels while
+60-second aliasing does not (Section~\ref{sec:theory}); (iii) derive a
+sampling-horizon law $\Tstar \propto \delta^{-4} q^{-1}$ and the
+standard-compliance threshold it implies, and identify cross-network pooling as
+the only lever that keeps the horizon finite (Section~\ref{sec:horizon}); and
+(iv) instantiate the bound through a feed-by-feed audit of \Todo{$N$} French
+networks, whose identifier-persistence rates split sharply into compliant and
+non-compliant regimes (Section~\ref{sec:audit}). Section~\ref{sec:discussion}
+translates the threshold into a concrete recommendation for the standard's
+maintainers. Because the novelty of the contribution rests on \emph{not}
+re-deriving the classical estimators, we first delimit what the existing two
+literatures already settle.
 
 % =========================================================================
-\section{Data regimes, model and notation}
-\label{sec:setup}
+\section{Background and related work}
+\label{sec:related}
 
-\Todo{Prose introducing the three regimes (published trips; station-status
-counts; persistent-identifier tracking) and positioning our hybrid between
-the latter two.}
+\paragraph{Counts give an underdetermined, prior-driven OD.}
+Recovering an OD matrix from link or node counts is a 45-year-old, well-posed
+but underdetermined problem. \citet{VanZuylenWillumsen1980} introduced the
+maximum-entropy and minimum-information estimators; \citet{Cascetta1984}
+incorporated survey priors through generalized least squares;
+\citet{Spiess1987} gave the Poisson maximum-likelihood form; and
+\citet{CascettaNguyen1988} unified the family. A practical point that frames
+our own method is that the workhorse estimators are \emph{the same object}: the
+iterative proportional fitting used to balance a matrix to target margins is
+exactly the Sinkhorn iteration for entropic optimal transport
+\citep{Sinkhorn1964,Cuturi2013,PeyreCuturi2019}, which is in turn the
+maximum-entropy gravity model of \citet{Wilson1967}. Modern work sharpens the
+conditioning of the inverse \citep{MaQian2023} but does not change the verdict:
+from counts alone, pair-level OD is weakly identified.
+
+\paragraph{Identifier tracking is exact but treats its biases as nuisances.}
+When a feed exposes a persistent identifier, trips are reconstructed by tracking
+position jumps between snapshots; \citet{Xu2022} give the reference algorithm
+family, validated on one week of feeds from six vendors in a single city. This
+and adjacent studies catalogue the biases---rebalancing contamination, GPS
+jitter, and aliasing under coarse polling---but treat them as cleanup steps, and
+are almost universally single-city, single-window, and silent on censored
+demand \citep{RudloffLackner2014,Negahban2019,Goh2019} and on the standard's
+identifier-rotation guidance.
+
+\paragraph{The gap.}
+No prior work models the impact of a \emph{standard specification}---concretely,
+the identifier-rotation (persistence) rate $q$---on the mathematical solvability
+of the downstream OD model. The closest cross-domain analogue, network
+tomography \citep{Vardi1996}, draws its identifying power from a known routing
+matrix that the station-count setting simply does not possess, so it collapses
+to bare margin balancing. We close this gap by making compliance a parameter of
+the estimator and bounding identifiability and collection cost as functions of
+it. We now fix notation and the structural assumption that makes this possible.
+
+% =========================================================================
+\section{Problem formulation and data regimes}
+\label{sec:formulation}
 
 Let stations be indexed $i,j\in\{1,\dots,N\}$ and let $\Pstar\in\R_{\ge
-0}^{N\times N}$ be the true OD coupling over a fixed period, with row
-margins $r^\star_i=\sum_j \Pstar_{ij}$ (outflow) and column margins
-$c^\star_j=\sum_i \Pstar_{ij}$ (inflow). The structural (gravity / entropic
-optimal-transport) assumption is the Gibbs form
+0}^{N\times N}$ be the true OD coupling over a fixed period, with row margins
+$r^\star_i=\sum_j \Pstar_{ij}$ (outflow) and column margins
+$c^\star_j=\sum_i \Pstar_{ij}$ (inflow). Throughout we adopt the Gibbs
+(gravity / entropic optimal-transport) structural assumption
 \begin{equation}
 \label{eq:gibbs}
 \Pstar_{ij} = u^\star_i\, v^\star_j\, e^{-\cstar_{ij}/\varepsilon},
 \end{equation}
-for potentials $u^\star,v^\star$, ground cost $\cstar$ and temperature
-$\varepsilon>0$. This is the maximum-entropy trip-distribution model
-\citep{Wilson1967} and is identical, as an algorithm, to iterative
-proportional fitting and to the Sinkhorn iteration for entropic optimal
-transport \citep{Sinkhorn1964,Cuturi2013,PeyreCuturi2019}.
+with potentials $u^\star,v^\star$, ground cost $\cstar$, and temperature
+$\varepsilon>0$. As recalled in Section~\ref{sec:related}, this is simultaneously
+the maximum-entropy trip-distribution model and the fixed point of Sinkhorn
+balancing, so \eqref{eq:gibbs} is not an additional modelling commitment beyond
+the estimators the field already uses---only an explicit one.
 
-\paragraph{Macro observation (censored margins).}
+Two observation channels constrain different parts of \eqref{eq:gibbs}.
+
+\paragraph{Macro channel: censored margins.}
 Station-status counts provide noisy, right-censored margins
 $\hat r_i = \rho_i\, r^\star_i$ with availability fraction $\rho_i\in(0,1]$,
-reflecting demand lost at empty/full stations \citep{RudloffLackner2014,
-Negahban2019}.
+reflecting demand lost at empty or full stations \citep{RudloffLackner2014,
+Negahban2019}. The macro channel thus pins (a degraded version of) the margins
+but says nothing about the interior.
 
-\paragraph{Micro observation (selection-tilted sample).}
-A sub-sample of identifier-tracked trips is drawn from the
-\emph{selection-tilted} law $\tilde P_{ij}\propto \Pstar_{ij}\,S_{ij}$,
-where $S_{ij}\in[0,1]$ aggregates identifier persistence $q$, non-rebalancing
-$(1-\beta)$, and capture under polling interval $\Delta$ (anti-aliasing)
-$\kappa$.
+\paragraph{Micro channel: a selection-tilted sample.}
+A sub-sample of identifier-tracked trips is drawn not from $\Pstar$ but from the
+\emph{selection-tilted} law $\tilde P_{ij}\propto \Pstar_{ij}\,S_{ij}$, where the
+selection probability $S_{ij}\in[0,1]$ aggregates identifier persistence $q$,
+non-rebalancing $(1-\beta)$, and capture under polling interval $\Delta$
+(anti-aliasing) $\kappa$. The micro channel thus carries information about the
+interior---the cost---but through a biased lens. The remainder of the paper
+asks what that lens lets us recover, and at what cost in collection time.
 
 % =========================================================================
-\section{Identifiability of the interaction cost}
+\section{Cost identifiability and the structure of observation bias}
+\label{sec:theory}
+
+\subsection{The transport cost is identifiable only modulo station effects}
 \label{sec:identif}
 
 The Gibbs form \eqref{eq:gibbs} is invariant under
-$\cstar_{ij}\mapsto \cstar_{ij}+f_i+g_j$ (absorbed into the potentials).
-Hence the cost is identifiable only modulo the separable subspace
-$\Ncal=\{(f_i+g_j)_{ij}\}$ ($\dim\Ncal=2N-1$); the identifiable object is
-the interaction part $\Pperp \cstar$, equivalently the second-order
-cross-differences $c_{ij}-c_{il}-c_{kj}+c_{kl}$.
+$\cstar_{ij}\mapsto \cstar_{ij}+f_i+g_j$, since any additive separable term is
+absorbed into the potentials. The cost is therefore identifiable only modulo the
+separable subspace $\Ncal=\{(f_i+g_j)_{ij}\}$ ($\dim\Ncal=2N-1$); the
+identifiable object is the interaction part $\Pperp \cstar$, equivalently the
+second-order cross-differences $c_{ij}-c_{il}-c_{kj}+c_{kl}$.
 
 \begin{theorem}[Cost identifiability]
 \label{thm:identif}
-Under \eqref{eq:gibbs}, $\Pperp\cstar$ is identifiable from a coupling, and
-no separable component of $\cstar$ is. \Todo{State regularity conditions;
-proof by the matching/ground-metric argument of \citet{GalichonSalanie2022,
-DupuyGalichon2014,CuturiAvis2014}; full proof in SI Appendix~A.}
+Under \eqref{eq:gibbs}, $\Pperp\cstar$ is identifiable from a coupling, and no
+separable component of $\cstar$ is. \Todo{State regularity conditions; the proof,
+a matching/ground-metric argument in the manner of \citet{GalichonSalanie2022,
+DupuyGalichon2014,CuturiAvis2014}, is given in SI Appendix~A.}
 \end{theorem}
+
+This is not a technicality but a design rule for the cost model. A low-rank
+parametric cost $c_{ij}=\phi(x_i,x_j;\theta)$ may only use features whose
+information survives projection onto $\Ncal^\perp$.
 
 \begin{definition}[Admissible cost feature]
 \label{def:admissible}
 A candidate feature $\psi_{ij}=\phi^{(k)}(x_i,x_j)$ is \emph{admissible} iff it
 survives two-way (origin/destination) centring,
 $\tilde\psi_{ij}=\psi_{ij}-\bar\psi_{i\cdot}-\bar\psi_{\cdot j}+\bar\psi_{\cdot\cdot}
-\neq 0$; monadic features ($\psi_{ij}=a_i$ or $b_j$) are inadmissible and
-belong in the potentials/margins, not the cost.
+\neq 0$. Monadic features ($\psi_{ij}=a_i$ or $b_j$) are inadmissible: they are
+absorbed into the potentials and belong in the margins, not the cost.
 \end{definition}
 
-\Todo{Discuss the low-rank parametric cost $c_{ij}=\phi(x_i,x_j;\theta)$:
-admissible, mutually non-collinear-after-projection dyadic features ---
-routed cycling distance, \emph{directed} elevation gain, circuity, protected-lane
-fraction, barrier (river/rail) crossings. Conditioning $\lambda_{\min}$ of the
-projected information matrix is what keeps the collection horizon finite
-(Sec.~\ref{sec:horizon}).}
+Admissible, mutually non-collinear dyadic features---routed cycling distance,
+\emph{directed} elevation gain, circuity, protected-lane fraction, and
+river/rail barrier crossings---are what give the projected information matrix a
+well-conditioned smallest eigenvalue $\lambda_{\min}$, which
+Section~\ref{sec:horizon} shows is what keeps the collection horizon finite.
 
-% =========================================================================
-\section{The selection-bias decomposition}
+\subsection{Observation bias equals the non-separable log-selection}
 \label{sec:bias}
+
+Because the micro-sample is drawn from $\tilde P\propto \Pstar\odot S$ rather
+than $\Pstar$, fitting \eqref{eq:gibbs} to it recovers the cost of $\tilde P$,
+namely $\tilde c = \cstar - \varepsilon\log S$.
 
 \begin{proposition}[Bias = non-separable log-selection]
 \label{prop:bias}
-The micro-sample identifies the cost of $\tilde P$, namely
-$\tilde c = \cstar - \varepsilon\log S$; therefore the estimated identifiable
-cost satisfies
+The estimated identifiable cost satisfies
 \begin{equation}
 \label{eq:bias}
 \Pperp\hat c \;\xrightarrow{\,n\to\infty\,}\; \Pperp\cstar
 \;-\;\varepsilon\,\Pperp\log S .
 \end{equation}
 In particular, if the selection is separable, $S_{ij}=a_i b_j$, then
-$\log S\in\Ncal$ and the bias vanishes.
+$\log S\in\Ncal$ and the bias vanishes. \Todo{Proof in SI Appendix~A.}
 \end{proposition}
+
+\subsection{Station emptiness cancels; 60-second aliasing does not}
+\label{sec:aliasing}
+
+Proposition~\ref{prop:bias} converts a question about data quality into a
+question about the \emph{separability} of the selection mechanism, and the two
+dominant defects fall on opposite sides of that line.
 
 \begin{corollary}[Which censoring hurts]
 \label{cor:aliasing}
 Station-emptiness censoring acts at the origin/destination level
-($S_{ij}=a_i b_j$) and \emph{cancels} in the identifiable cost. Aliasing
-under polling interval $\Delta$ has capture probability that depends on the
-trip duration $t_{ij}$, hence on $\cstar_{ij}$ itself; it is
-\emph{non-separable} and correlated with the estimand, so it does not cancel
-and systematically attenuates the cost--distance relationship. Residual
-operator rebalancing on specific corridors is likewise non-separable.
+($S_{ij}=a_i b_j$) and therefore \emph{cancels} in the identifiable cost.
+Aliasing under polling interval $\Delta$ has a capture probability that depends
+on the trip duration $t_{ij}$, hence on $\cstar_{ij}$ itself; it is
+\emph{non-separable} and correlated with the estimand, so it does not cancel and
+systematically attenuates the cost--distance relationship. Residual operator
+rebalancing, concentrated on specific corridors, is likewise non-separable.
 \end{corollary}
 
-\Todo{Quantify the residual non-separable bias as a function of $\Delta$;
-proof of Prop.~\ref{prop:bias} in SI Appendix~A.}
+The practical reading is uncomfortable: the defect one would expect to be fatal
+(empty stations) is harmless to the cost, while the seemingly benign engineering
+choice of a polling cadence is the true adversary, because it attacks exactly the
+signal being estimated. Since the aliasing bias can only be beaten by sampling
+more often and for longer, the natural next question is precisely \emph{how long}
+one must collect---which leads us to formulate the sampling-horizon law.
 
 % =========================================================================
 \section{The sampling-horizon law}
 \label{sec:horizon}
 
-Writing $\Lambda$ for the trip-generation rate (trips/day), the number of
-clean, attributable observations after $T$ days of polling at interval
-$\Delta$ is
+Let $\Lambda$ denote the trip-generation rate (trips per day). After $T$ days of
+polling at interval $\Delta$, the number of clean, attributable observations is
 \begin{equation}
 \label{eq:neff}
 \neff = \Lambda\,T\,\kappa(\Delta)\,q\,(1-\beta)\,(1-\gamma),
 \end{equation}
-with $\gamma$ the GPS-jitter / collision loss. Propagating the cost error
-through the entropic-OT forward map (sensitivity $O(1/\varepsilon)$,
-entropic bias $O(\varepsilon)$; balancing gives an $n^{-1/4}$ rate on the OD
-error) yields the requirement $\neff\gtrsim \dim\theta/(\lambda_{\min}\,
-\delta_\OD^{4})$ and hence the collection horizon.
+where $\gamma$ is the GPS-jitter / collision loss. Propagating the cost-learning
+error through the entropic-OT forward map---whose sensitivity is $O(1/\varepsilon)$
+while its entropic bias is $O(\varepsilon)$, so that the optimal balance yields an
+$n^{-1/4}$ rate on the OD error---turns a target accuracy into a required
+effective sample $\neff\gtrsim \dim\theta/(\lambda_{\min}\,\delta_\OD^{4})$, and
+hence a required collection time.
 
 \begin{theorem}[Sampling-horizon law]
 \label{thm:horizon}
 To reconstruct the OD coupling to relative accuracy $\delta_\OD$ under the
-estimator of Sections~\ref{sec:identif}--\ref{sec:bias},
+estimator of Sections~\ref{sec:identif}--\ref{sec:aliasing},
 \begin{equation}
 \label{eq:Tstar}
 \Tstar \;=\;
@@ -300,9 +400,12 @@ estimator of Sections~\ref{sec:identif}--\ref{sec:bias},
      {\lambda_{\min}\,\delta_\OD^{4}\;\Lambda\,\kappa(\Delta)\,q\,(1-\beta)(1-\gamma)} ,
 \end{equation}
 so $\Tstar\propto \delta_\OD^{-4}\,q^{-1}\,\Lambda^{-1}\,\lambda_{\min}^{-1}$.
-\Todo{State constants and the forward-stability lemma; proof in
-SI Appendix~B.}
+\Todo{Forward-stability lemma and proof in SI Appendix~B.}
 \end{theorem}
+
+The fourth-power dependence on accuracy is the signature of the entropic
+estimator: tightening the OD target from $20\%$ to $10\%$ multiplies the required
+horizon by $2^4=16$. The inverse dependence on $q$ is the policy-relevant term.
 
 \begin{corollary}[Standard-compliance threshold]
 \label{cor:threshold}
@@ -313,81 +416,144 @@ $q \ge q_{\min}:=\dim\theta/(\lambda_{\min}\delta_\OD^4 \Lambda
 $T_{\max}$ and operational monitoring is infeasible.
 \end{corollary}
 
-\Todo{Pooling rescue: a hierarchical cost shared across the $N$ networks
-divides $\dim\theta$ per city and buys down $\Tstar$; this is why the
-multi-system panel is statistically load-bearing, not merely comparative.
-Also state the comparability tension: a fixed $\varepsilon$ across cities
-imposes a precision floor $\delta_\OD\gtrsim\varepsilon$.}
+\subsection{Partial pooling across networks is the only lever on \texorpdfstring{$\Tstar$}{T*}}
+\label{sec:pooling}
+
+For a single small network, \eqref{eq:Tstar} can run to years (Section~\ref{sec:audit}).
+The only term the analyst controls is $\dim\theta$. Modelling the cost
+hierarchically---a common deterrence law $\theta$ shared across the $N$ networks
+with city-level random effects---divides the per-city parameter budget by the
+number of poolable cities, and is therefore the mechanism that brings $\Tstar$
+back from ``years'' to ``weeks''. The multi-system panel is thus
+\emph{statistically load-bearing}, not merely a comparative convenience; a fixed
+$\varepsilon$ imposed for cross-city comparability additionally caps the
+achievable accuracy at $\delta_\OD\gtrsim\varepsilon$. With the law in hand, we
+turn to measuring its constants on real feeds.
 
 % =========================================================================
-\section{Empirical protocol and pilot}
-\label{sec:empirics}
+\section{Auditing the French micromobility feeds}
+\label{sec:audit}
 
-\Todo{The five constants $(q,\kappa,\beta,\gamma,\Lambda)$ are unknown and
-feed-specific; the protocol is a 7-day pilot that \emph{measures} them per
-feed (script \texttt{experiments/d01\_pilot.py}). $\hat q$: fraction of
-identifiers persisting origin-to-destination. $\hat\kappa(\Delta)$: by
-re-reconstructing at coarser intervals and measuring trip loss (the aliasing
-curve). $\hat\beta$: \texttt{is\_disabled} + departure-burst fraction.
-$\hat\Lambda$: reconstructed trips/day. $\lambda_{\min}$: smallest eigenvalue
-of the projected dyadic-feature Gram matrix. Instantiate \eqref{eq:Tstar}
-per network; produce the thesis figure $\Tstar$ vs $q$ with the
-operational-monitoring frontier and the \Todo{$N$} French feeds positioned on
-it.}
+\subsection{Protocol: measuring the five governing constants}
+\label{sec:protocol}
+
+The five constants $(q,\kappa,\beta,\gamma,\Lambda)$ are feed-specific and
+\emph{measured}, not assumed. A polling daemon collects
+\texttt{free\_bike\_status}/\texttt{vehicle\_status} snapshots at
+$\Delta=60$\,s across the French free-floating systems that expose a vehicle
+feed, writing one record per vehicle per poll (identifier, position, status
+flags). Two reproducible scripts realise the estimators:
+\texttt{experiments/d01\_pilot.py} computes the horizon \eqref{eq:Tstar} from a
+set of constants, and \texttt{experiments/d02\_persistence\_audit.py} estimates
+$\hat q$ feed by feed. Persistence is read off the snapshot timeline by rank over
+the observed poll grid---robust to missed collection polls, which a clock-based
+rule would miscount as trips: a vehicle whose identifier vanishes for one or more
+served polls and \emph{reappears} is a linked disappearance, one that vanishes
+before the window's safe sub-grid and never returns is terminal, and
+$\hat q = \text{linked}/(\text{linked}+\text{terminal})$. The aliasing curve
+$\kappa(\Delta)$ is obtained by re-reconstructing at coarser intervals,
+rebalancing $\beta$ from the operator status flags and departure bursts, and
+$\Lambda$ from the reconstructed clean trips. \Todo{Tabulate the full per-feed
+constant table and the cost-feature pipeline (routing, elevation, infrastructure
+layers) here; software stack and version pins; master seed $\texttt{SEED}=42$.}
+
+\subsection{The compliance--horizon landscape}
+\label{sec:landscape}
+
+\begin{figure}[t]
+  \centering
+  \figorplaceholder{fig_d01_horizon}{0.82\linewidth}{Money plot ($T^\star$ vs
+  $q$, from \texttt{d01\_pilot.py}): collection horizon against
+  identifier-persistence rate for several trip rates $\Lambda$, with the
+  operational-monitoring frontier and the audited feeds positioned on it.}
+  \caption{The compliance--horizon landscape. The required collection horizon
+  $\Tstar$ diverges as $q\to 0$ and as $\delta_\OD$ tightens (power $-4$);
+  feeds below the operational frontier are not monitorable in practice.
+  \Todo{regenerate with the multi-day constants.}}
+  \label{fig:horizon}
+\end{figure}
+
+\begin{figure}[t]
+  \centering
+  \figorplaceholder{fig_d02_persistence}{0.82\linewidth}{Per-feed
+  identifier-persistence $\hat q$ (from \texttt{d02\_persistence\_audit.py}),
+  sorted, with the rotating/persistent thresholds marked.}
+  \caption{Identifier persistence is bimodal across French feeds: $\hat q$ is
+  either $\approx 0$ (standard-compliant, untrackable) or $\approx 1$
+  (non-compliant, fully trackable), with little mass in between.}
+  \label{fig:persistence}
+\end{figure}
+
+A first-light audit of $27$ French free-floating networks, over a short pilot
+window with collection ongoing, already exhibits the split the theory predicts.
+Of the $17$ feeds on which $q$ is estimable, $11$ \emph{rotate} their identifiers
+($\hat q\approx 0$: vehicles vanish on rental and never return under the same
+identifier---e.g.\ the largest free-floating fleet shows $0$ linked against
+$>2000$ terminal disappearances), and $6$ \emph{persist}
+($\hat q\in[0.90,1.00]$); the remaining $10$ are undetermined over the pilot
+window (low-turnover car-sharing and very small fleets). The distribution is
+sharply bimodal (Figure~\ref{fig:persistence}): $\hat q$ clusters at the two
+extremes, essentially nothing in between, which is exactly the signature of a
+binary engineering choice---whether or not an operator implements the standard's
+rotation guidance---rather than a continuum of behaviours.
+\Todo{Replace the pilot-window counts with the multi-day audit once collection
+matures; report the full constant table and place each network on
+Figure~\ref{fig:horizon}.} Read through Corollary~\ref{cor:threshold}, the
+rotating half of the panel is simply not OD-monitorable from GBFS at any
+practical horizon---a conclusion that is about the standard, not the operators,
+and that we now develop.
 
 % =========================================================================
-\section{Related work}
-\label{sec:related}
-
-\Todo{Position at the empty intersection of (i) count-based OD estimation
-\citep{VanZuylenWillumsen1980,Cascetta1984,CascettaNguyen1988,Spiess1987,
-Bell1991,MaQian2023}, (ii) identifier-based micromobility OD inference
-\citep{Xu2022}, (iii) censored-demand correction \citep{RudloffLackner2014,
-Negahban2019,Goh2019}, (iv) inverse / ground-metric optimal transport
-\citep{CuturiAvis2014,StuartWolfram2020,DupuyGalichon2014}, and (v) feed
-quality / standards auditing (our GBFS Audit Catalogue, Paper~01). One
-sentence of "what we add" per cluster. Note the equivalence
-IPF~$=$~Sinkhorn~$=$~gravity to pre-empt a novelty objection, and that
-network tomography \citep{Vardi1996} loses its identifying routing matrix in
-the station-count setting.}
-
-% =========================================================================
-\section{Discussion}
+\section{Discussion: standards and policy implications}
 \label{sec:discussion}
 
-\Todo{Standards reading: the GBFS identifier-rotation guidance (issue \#146;
-v2.0) is a privacy feature that simultaneously sets the ceiling on OD
-observability; Corollary~\ref{cor:threshold} turns this into a quantitative
-recommendation (a minimum persistence, or an explicit acknowledgement that
-OD is non-monitorable from compliant feeds). Connect to MDS and to the
-regulator-facing data path.}
+Corollary~\ref{cor:threshold} turns a privacy feature of the standard into a
+quantitative limit on what the standard can be used for. GBFS issue~\#146 and the
+v2.0 guidance recommend rotating the vehicle identifier after each trip precisely
+to prevent the full-resolution OD reconstruction that a persistent identifier
+enables; the same property, by Theorem~\ref{thm:horizon}, is what drives the
+collection horizon to infinity. There is therefore an irreducible tension, which
+we make explicit rather than paper over: a feed cannot be simultaneously
+privacy-compliant (small $q$) and OD-monitorable at a practical horizon.
+
+For the standard's maintainers (MobilityData) this yields a concrete
+recommendation. If GBFS is to remain the interface through which agencies expect
+to derive mobility statistics, it must either (i) specify a minimum, auditable
+persistence regime---e.g.\ session-scoped but trip-stable identifiers---or
+(ii) state plainly that OD is \emph{out of scope} for a privacy-compliant GBFS
+and route transactional needs to the regulator-facing Mobility Data
+Specification (MDS), whose two-way, trip-level access is the appropriate channel
+when $q<q_{\min}$. \Todo{Develop the $q_{\min}$ figure for representative French
+agencies and connect to the LOM/GDPR context.} Either way, the design choice
+should be made knowingly, with the horizon law in view, rather than emerging by
+accident from an identifier-rotation default.
 
 % =========================================================================
-\section{Limitations and future work}
-\label{sec:limits}
+\section{Conclusion and limitations}
+\label{sec:conclusion}
 
-\Todo{The Gibbs/low-rank-cost assumption is the binding modelling
-commitment; the bound is conditional on it. Constants in
-Theorem~\ref{thm:horizon} from entropic-OT stability can be loose at
-$N\sim 1500$ \citep{MenaNilesWeed2019,Genevay2019}. The estimator recovers
-the entropy-optimal representative, not pair-level OD; interior cells remain
-weakly identified. Validation against ground truth requires a feed that both
-exposes persistent identifiers and publishes trips---address head-on.}
+We have shown that the feasibility of OD reconstruction from GBFS is governed by
+the standard's identifier-persistence regime: the learnable cost is identifiable
+only up to station effects, its observation bias is exactly the non-separable
+part of the log-selection (so station emptiness is harmless but 60-second
+aliasing is not), and the resulting estimator obeys a sampling-horizon law
+$\Tstar\propto\delta_\OD^{-4}q^{-1}$ that defines a compliance threshold below
+which monitoring is infeasible. An audit of French feeds confirms a sharp
+compliant/non-compliant split.
+
+The results are conditional on the Gibbs/low-rank-cost assumption, which---though
+it coincides with the field's standard estimators---is the binding commitment;
+the stability constants in Theorem~\ref{thm:horizon} can be loose at large $N$
+\citep{MenaNilesWeed2019,Genevay2019}; and the estimator recovers the
+entropy-optimal representative, not pair-level OD, whose interior remains weakly
+identified. Validation against ground truth requires a feed that both exposes
+persistent identifiers and publishes trips, a thin intersection we address in
+future work alongside the multi-day audit and the hierarchical cost of
+Section~\ref{sec:pooling}.
 
 % =========================================================================
-\section{Methods}
-\label{sec:methods}
-
-\Todo{Reproducibility-grade Methods: feed catalogue and discovery, the
-vehicle snapshot collector (60\,s), trip reconstruction (min-move,
-rebalancing heuristics), the cost-feature pipeline (routing, elevation,
-infrastructure layers), the inverse-OT cost estimator, the forward Sinkhorn
-solver, and the constant-estimation procedures. Software stack with version
-pins; SEED $=42$.}
-
-% =========================================================================
-% Back matter -- iopjournal native commands.  Under [anonymous] all but
-% \data are auto-redacted.  Migrate into elsarticle \frontmatter at submission.
+% Back matter -- iopjournal native commands.  Migrate into elsarticle
+% \frontmatter (and a CRediT statement) at submission.
 % =========================================================================
 
 \ack{\Todo{Acknowledgements.}}
@@ -405,9 +571,10 @@ Zenodo DOI after the first release}.}
 
 \section*{Reproducibility}
 Each table and figure is produced by a numbered script
-\texttt{experiments/d<NN>\_<name>.py} that consumes a known input cache,
-writes a named output JSON, and pins \texttt{SEED=42}.
-\Todo{Add experiment-specific reproducibility detail here.}
+\texttt{experiments/d<NN>\_<name>.py} that consumes a known input cache, writes a
+named output JSON/CSV, and pins \texttt{SEED=42}. The persistence audit
+(Section~\ref{sec:audit}) is \texttt{d02\_persistence\_audit.py}; the horizon
+figure is \texttt{d01\_pilot.py}. \Todo{Add experiment-specific detail.}
 
 \section*{Competing interests}
 The authors declare no competing financial or non-financial interests.
